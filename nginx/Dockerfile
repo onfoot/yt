@@ -1,0 +1,6 @@
+# Use the official Nginx image as the base image
+FROM nginx:latest
+
+# Copy your custom Nginx configuration file into the container
+COPY nginx.conf /etc/nginx/nginx.conf
+
