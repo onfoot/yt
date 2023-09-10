@@ -32,7 +32,7 @@ def format_filename(filename):
 def download_video(url):
     ydl_opts = {
         'outtmpl': 'videos/%(id)s.%(ext)s',
-        'format': 'bv[ext=mp4][vcodec~=\'^(av01|(he|a)vc|h26[45])\']+ba[ext=m4a]',
+        'format': 'bv[ext=mp4][vcodec~=\'^((he|a)vc|h26[45])\']+ba[ext=m4a]',
         #'format_sort': {'codec': 'h264'}
     }
 
