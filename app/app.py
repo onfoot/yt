@@ -36,6 +36,11 @@ def download_video(url):
     ydl_opts = {
         'outtmpl': 'videos/%(id)s.%(ext)s',
         'format': 'bv[ext=mp4][vcodec~=\'^((he|a)vc|h26[45])\']+ba[ext=m4a]',
+        'embed-metadata': True,
+        'embed-chapters': True,
+        'embed-subs': True,
+        'sub-format': 'ass',
+        'embed-thumbnail': True,
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -51,13 +56,20 @@ def download_video(url):
 
     return safe_filename
 
-@app.route('/videos/<path:filename>')
+@app.route('/videos/<path:filename>', methods=['GET'])
 def download(filename):
     return send_from_directory('videos', filename, as_attachment=False)
+
+@app.route('/videos/<path:filename>', methods=['DELETE'])
+def delete(filename):
+    filename = os.path.normpath('videos/{filename}'.format(filename=filename))
+    if filename.startswith('videos/'):
+        os.remove(filename)
+    return '', 204
 
 if __name__ == '__main__':
     if not os.path.exists('videos'):
         os.makedirs('videos')
 
-    app.run(host='0.0.0.0', port=4999, debug=False)
+    app.run(host='0.0.0.0', port=4999, debug=True)
 

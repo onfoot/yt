@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Video Downloader</title>
-
+    <meta name="viewport" content="width=device-width">
     <style>
         body {
             font-family: system-ui, sans-serif;
@@ -12,10 +12,11 @@
         }
 
         h1 {
-            background-color: #007BFF;
+            background-color: #0079b2;
             color: #fff;
             padding: 20px;
             margin: 0;
+            font-size: 28pt;
         }
 
         h2 {
@@ -42,20 +43,37 @@
             border: 1px solid #ccc;
             border-radius: 3px;
             font-size: 14pt;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            font-size: 14pt;
+            cursor: pointer;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 3px;
         }
 
         button[type="submit"] {
             background-color: #007BFF;
             color: #fff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 14pt;
         }
 
         button[type="submit"]:hover {
             background-color: #0056b3;
+        }
+
+        button.delete_video {
+            background-color: #b3005d;
+            color: #fff;
+            visibility: hidden;
+        }
+
+        button.delete_video:hover {
+            background-color: #7d005f;
+            color: #fff;
+            visibility: hidden;
         }
 
         ul {
@@ -73,8 +91,36 @@
         }
 
         a:hover {
-            text-decoration: underline;
+            text-decoration: none;
         }
+
+        a.video-link {
+            font-size: 16pt;
+        }
+
+        a.video-link {
+            font-size: 16pt;
+        }
+
+        a.video-link:visited {
+            color: #0079b2
+        }
+
+        div.links {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        div.links:hover {
+            background-color: #d9d9d9;
+        }
+        
+        div.links:hover button.delete_video {
+            visibility: visible;
+        }
+        
     </style>
 
 
@@ -82,16 +128,36 @@
 <body>
     <h1>Video Downloader</h1>
     <form method="POST">
-        <label for="video_url">Video URL:</label>
-        <input type="text" name="video_url" id="video_url" required>
+        <input type="text" name="video_url" id="video_url" placeholder="Video URL" required>
         <button type="submit">Download</button>
     </form>
 
     <h2>Downloaded files</h2>
-    <ul>
-        {% for video_file in video_files %}
-        <li><a href="{{ url_for('download', filename=video_file['original_filename']) }}">{{ video_file['sanitized_title'] }}</a></li>
-        {% endfor %}
-    </ul>
+    {% for video_file in video_files %}
+    <div class="links">
+        <a class='video-link' href="{{ url_for('download', filename=video_file['original_filename']) }}">{{ video_file['sanitized_title'] }}</a>
+        <button class="delete_video" data-video="{{ url_for('download', filename=video_file['original_filename']) }}">Delete</button>
+    </div>
+    {% endfor %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const deleteButtons = document.querySelectorAll('button.delete_video');
+            for (const button of deleteButtons) {
+                console.log(`Will add click listener to delete ${button.getAttribute('data-video')}`);
+                button.addEventListener('click', function(event) {
+                    let videoPath = button.getAttribute('data-video');
+                    console.log(`Should delete ${button.getAttribute('data-video')}`);
+                    fetch(videoPath, {
+                        method: 'DELETE'
+                    }).then(function(response) {
+                        if (response.ok) {
+                            window.location.href = '/';
+                        }
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 </html>
