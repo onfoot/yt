@@ -11,7 +11,7 @@ services:
       FLASK_ENV: production
     volumes:
       - ./app:/app
-      - ./videos:/app/videos
+      - ${VIDEOS_DIR:-./videos}:/app/videos
   nginx:
     build:
       context: ./nginx
@@ -19,3 +19,5 @@ services:
       - "8092:80"
     depends_on:
       - flask-app
+    volumes:
+      - ${VIDEOS_DIR:-./videos}:/videos
