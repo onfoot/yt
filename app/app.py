@@ -6,7 +6,6 @@ VIDEO_EXTENSION = ".mp4"
 
 app = Flask(__name__)
 
-
 @app.route('/', methods=['GET', 'POST'])
 def index():
     video_url = None
@@ -17,14 +16,14 @@ def index():
         return redirect('/')
 
     video_files = list_mp4_video_files()
-    formatted_video_files = [
-        {
-            'original_filename': filename,
-            'sanitized_title': format_filename(filename)
-        } for filename in video_files
-    ]
+    for filename in video_files:
+        formatted_video_files = [
+            {
+                'original_filename': filename,
+                'sanitized_title': format_filename(filename)
+            } for filename in video_files
+        ]
     return render_template('index.html', video_files=formatted_video_files)
-
 
 def list_mp4_video_files():
     files = [f for f in os.listdir('videos') if f.endswith(VIDEO_EXTENSION)]
@@ -36,7 +35,6 @@ def list_mp4_video_files():
 
 def format_filename(filename):
     return filename.replace('_', ' ').replace(VIDEO_EXTENSION, '')
-
 
 def download_video(url):
     ydl_opts = {
@@ -85,12 +83,13 @@ def download_video(url):
 def download(filename):
     return send_from_directory('videos', filename, as_attachment=False)
 
-@app.route('/videos/<path:filename>', methods=['DELETE'])
-def delete(filename):
+@app.route('/delete', methods=['POST', 'DELETE'])
+def delete():
+    filename = request.args.get('file', default=None, type=str)
     filename = os.path.normpath('videos/{filename}'.format(filename=filename))
     if filename.startswith('videos/'):
         os.remove(filename)
-    return '', 204
+    return '{filename}', 200
 
 if __name__ == '__main__':
     if not os.path.exists('videos'):

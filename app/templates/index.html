@@ -122,7 +122,7 @@
     {% for video_file in video_files %}
     <div class="links">
         <a class='video-link' href="{{ url_for('download', filename=video_file['original_filename']) }}">{{ video_file['sanitized_title'] }}</a>
-        <button class="delete_video" data-video="{{ url_for('download', filename=video_file['original_filename']) }}">Delete</button>
+        <button class="delete_video" data-video="{{ video_file['original_filename'] }}">Delete</button>
     </div>
     {% endfor %}
 
@@ -133,9 +133,8 @@
                 console.log(`Will add click listener to delete ${button.getAttribute('data-video')}`);
                 button.addEventListener('click', function(event) {
                     let videoPath = button.getAttribute('data-video');
-                    console.log(`Should delete ${button.getAttribute('data-video')}`);
-                    fetch(videoPath, {
-                        method: 'DELETE'
+                    fetch(`/delete?file=${videoPath}`, {
+                        method: 'POST'
                     }).then(function(response) {
                         if (response.ok) {
                             window.location.href = '/';
