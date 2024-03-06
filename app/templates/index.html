@@ -133,7 +133,7 @@
                 console.log(`Will add click listener to delete ${button.getAttribute('data-video')}`);
                 button.addEventListener('click', function(event) {
                     let videoPath = button.getAttribute('data-video');
-                    fetch(`/delete?file=${videoPath}`, {
+                    fetch(`/delete?file=${encodeURIComponent(videoPath)}`, {
                         method: 'POST'
                     }).then(function(response) {
                         if (response.ok) {
