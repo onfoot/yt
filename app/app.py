@@ -16,13 +16,12 @@ def index():
         return redirect('/')
 
     video_files = list_mp4_video_files()
-    for filename in video_files:
-        formatted_video_files = [
-            {
-                'original_filename': filename,
-                'sanitized_title': format_filename(filename)
-            } for filename in video_files
-        ]
+    formatted_video_files = [
+        {
+            'original_filename': filename,
+            'sanitized_title': format_filename(filename)
+        } for filename in video_files
+    ]
     return render_template('index.html', video_files=formatted_video_files)
 
 def list_mp4_video_files():
