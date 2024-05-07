@@ -78,9 +78,14 @@ def download_video(url):
     return safe_filename
 
 
-@app.route('/videos/<path:filename>', methods=['GET'])
-def download(filename):
-    return send_from_directory('videos', filename, as_attachment=False)
+@app.route('/play', methods=['GET'])
+def play():
+    filename = request.args.get('file', default=None, type=str)
+    formatted_video_file = {
+            'original_filename': filename,
+            'sanitized_title': format_filename(filename)
+    }
+    return render_template('play.html', video_file=formatted_video_file)
 
 @app.route('/delete', methods=['POST', 'DELETE'])
 def delete():
