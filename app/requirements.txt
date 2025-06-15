@@ -1,2 +1,4 @@
 Flask==3.0.3
 yt-dlp
+flask_socketio
+flask_cors

@@ -3,6 +3,7 @@
 <head>
     <title>Video Downloader</title>
     <meta name="viewport" content="width=device-width">
+    <script src="/static/js/socket.io.min.js"></script>
     <style>
         body {
             font-family: system-ui, sans-serif;
@@ -110,11 +111,13 @@
 </head>
 <body>
     <h1>Video Downloader</h1>
-    <form method="POST">
+    <form id="downloadForm">
         <input type="text" name="video_url" id="video_url" placeholder="Video URL" required>
         <button type="submit">Download</button>
     </form>
 
+    <ul id="downloadsList"></ul>
+    
     <h2>Downloaded files</h2>
     {% for video_file in video_files %}
     <div class="links">
@@ -124,6 +127,39 @@
     {% endfor %}
 
     <script>
+        async function fetchDownloads() {
+            try {
+                const response = await fetch('/downloads');
+                const data = await response.json();
+                const downloadsList = document.getElementById('downloadsList');
+                downloadsList.innerHTML = '';
+                for (const [url, status] of Object.entries(data)) {
+                    console.log(url);
+                   if (status === 'completed') {
+                       continue;
+                   }
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${url}: ${status}`;
+                    downloadsList.appendChild(listItem);
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        document.getElementById('downloadForm').addEventListener('submit', (event) => {
+                event.preventDefault();
+                const videoUrl = document.getElementById('video_url').value;
+                fetch('/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: videoUrl }),
+                });
+            });
+
+
         document.addEventListener('DOMContentLoaded', function() {
             const deleteButtons = document.querySelectorAll('button.delete_video');
             for (const button of deleteButtons) {
@@ -138,7 +174,16 @@
                     });
                 });
             }
+
+            const socket = io();
+
+            socket.on('download_complete', (data) => {
+                location.reload();
+            });
+
+            (async () => await fetchDownloads())();
         });
+
     </script>
 </body>
 </html>

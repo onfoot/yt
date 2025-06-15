@@ -12,6 +12,7 @@ services:
     volumes:
       - ./app:/app
       - ${VIDEOS_DIR:-./videos}:/app/videos
+    command: sh -c 'pip install -U yt-dlp && python app.py'
   nginx:
     build:
       context: ./nginx
@@ -20,4 +21,7 @@ services:
     depends_on:
       - flask-app
     volumes:
+      - ./static:/static
       - ${VIDEOS_DIR:-./videos}:/videos
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+
