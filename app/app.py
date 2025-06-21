@@ -89,7 +89,7 @@ def download_video(url):
             video_id = info_dict.get('id', 'video')
             video_title = info_dict.get('title', 'video')
             video_filename = f'{video_id}{VIDEO_EXTENSION}'
-            safe_filename = f'{video_title}{VIDEO_EXTENSION}'.replace(':', '_').replace('?', '_').replace(' ', '_').replace('#', '_')
+            safe_filename = f'{video_title}{VIDEO_EXTENSION}'.replace(':', '_').replace('?', '_').replace(' ', '_').replace('#', '_').replace('/', '_')
             ydl.download([url])
             os.rename('videos/' + video_filename, 'videos/' + safe_filename)
             downloads_in_progress[url] = 'completed'
