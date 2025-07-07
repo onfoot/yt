@@ -79,7 +79,7 @@ def download_video(url):
         'writesubtitles': True,
         'writethumbnail': True,
         'updatetime': False,
-        'progress_hooks': [create_progress_hook],
+        'progress_hooks': [create_progress_hook(url)],
     }
 
     try:
@@ -113,7 +113,8 @@ def delete():
     filename = os.path.normpath('videos/{filename}'.format(filename=filename))
     if filename.startswith('videos/'):
         os.remove(filename)
-    return '{filename}', 200
+        return filename, 200
+    return 'invalid file', 400
 
 if __name__ == '__main__':
     if not os.path.exists('videos'):
