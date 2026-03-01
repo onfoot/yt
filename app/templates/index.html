@@ -121,7 +121,7 @@
     <h2>Downloaded files</h2>
     {% for video_file in video_files %}
     <div class="links">
-        <a class='video-link' href="{{ url_for('play', file=video_file['original_filename']) }}">{{ video_file['sanitized_title'] }}</a>
+        <a class='video-link' href="{{ url_for('main.play', file=video_file['original_filename']) }}">{{ video_file['sanitized_title'] }}</a>
         <button class="delete_video" data-video="{{ video_file['original_filename'] }}">Delete</button>
     </div>
     {% endfor %}

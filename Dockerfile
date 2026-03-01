@@ -11,4 +11,4 @@ EXPOSE 4999
 
 ENV NAME Video downloader
 
-#CMD ["/bin/sh", "-c", "pip install -U yt-dlp && python app.py"]
+#CMD ["/bin/sh", "-c", "pip install -U yt-dlp && python -m app"]

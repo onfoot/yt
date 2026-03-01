@@ -9,10 +9,11 @@ services:
       - "4999:4999"
     environment:
       FLASK_ENV: production
+      VIDEOS_DIR: /app/videos
     volumes:
       - ./app:/app
       - ${VIDEOS_DIR:-./videos}:/app/videos
-    command: sh -c 'pip install -U yt-dlp && python app.py'
+    command: sh -c 'pip install -U yt-dlp && python -m app'
   nginx:
     build:
       context: ./nginx
