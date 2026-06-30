@@ -1,6 +1,6 @@
 FROM python:3-alpine
 
-RUN apk add ffmpeg
+RUN apk add ffmpeg nodejs
 
 WORKDIR /app
 

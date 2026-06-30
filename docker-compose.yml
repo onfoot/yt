@@ -13,7 +13,7 @@ services:
     volumes:
       - ./app:/app
       - ${VIDEOS_DIR:-./videos}:/app/videos
-    command: sh -c 'pip install -U yt-dlp && python -m app'
+    command: sh -c 'pip install -U "yt-dlp[default]" && python -m app'
   nginx:
     build:
       context: ./nginx

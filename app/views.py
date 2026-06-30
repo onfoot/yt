@@ -84,6 +84,7 @@ def download_video(url):
         'writesubtitles': True,
         'writethumbnail': True,
         'updatetime': False,
+        'js_runtimes': ['node'],
         'progress_hooks': [create_progress_hook(url)],
     }
 
