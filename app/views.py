@@ -1,19 +1,18 @@
-from flask import Flask, request, render_template, jsonify
-from flask_socketio import SocketIO, emit
-from flask_cors import CORS
-import yt_dlp
 import os
 import threading
+import yt_dlp
 
-VIDEO_EXTENSION = ".mp4"
+from flask import Blueprint, request, render_template, jsonify
+
+from . import socketio
+from .utils import list_mp4_video_files, format_filename, safe_filename, video_directory, VIDEO_EXTENSION
+
+bp = Blueprint('main', __name__)
 
 downloads_in_progress = {}
 
-app = Flask(__name__)
-CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
 
-@app.route('/', methods=['GET'])
+@bp.route('/', methods=['GET'])
 def index():
     video_files = list_mp4_video_files()
     formatted_video_files = [
@@ -24,38 +23,42 @@ def index():
     ]
     return render_template('index.html', video_files=formatted_video_files)
 
-@app.route('/downloads', methods=['GET'])
+
+@bp.route('/downloads', methods=['GET'])
 def downloads():
     return jsonify(downloads_in_progress)
 
-@app.route('/download', methods=['POST'])
+
+@bp.route('/download', methods=['POST'])
 def download():
-    data = request.get_json()
-    video_url = data['url']
+    data = request.get_json(silent=True) or {}
+    video_url = data.get('url')
+    if not video_url:
+        return jsonify({'error': 'url is required'}), 400
+
     threading.Thread(target=download_video, args=(video_url,)).start()
     return jsonify({'status': 'started'})
 
-def list_mp4_video_files():
-    files = [f for f in os.listdir('videos') if f.endswith(VIDEO_EXTENSION)]
-    update_times = [os.path.getmtime(os.path.join('videos', f)) for f in files]
-    files = [f for _, f in sorted(zip(update_times, files), reverse=True)]
-    return files
-
-def format_filename(filename):
-    return filename.replace('_', ' ').replace(VIDEO_EXTENSION, '')
 
 def yt_progress_hook(url, d):
-    socketio.emit('download_progress', {'url': url, 'status': d['status'], 'progress': d.get('_percent_str', '0%')})
+    socketio.emit('download_progress', {
+        'url': url,
+        'status': d['status'],
+        'progress': d.get('_percent_str', '0%')
+    })
+
 
 def create_progress_hook(url):
     def progress_hook(d):
         yt_progress_hook(url, d)
     return progress_hook
 
+
 def download_video(url):
+    directory = video_directory()
     ydl_opts = {
-        'outtmpl': 'videos/%(id)s.%(ext)s',
-        'format': 'bv[ext=mp4][vcodec~=\'^((he|a)vc|h26[45])\']+ba[ext=m4a]',
+        'outtmpl': os.path.join(directory, '%(id)s.%(ext)s'),
+        'format': "bv[ext=mp4][vcodec~='^((he|a)vc|h26[45])']+ba[ext=m4a]",
         'postprocessors': [
             {
                 'already_have_subtitle': False,
@@ -65,9 +68,11 @@ def download_video(url):
                 'add_chapters': True,
                 'add_infojson': 'if_exists',
                 'add_metadata': True,
-                'key': 'FFmpegMetadata'},
+                'key': 'FFmpegMetadata'
+            },
             {
-                'already_have_thumbnail': False, 'key': 'EmbedThumbnail'
+                'already_have_thumbnail': False,
+                'key': 'EmbedThumbnail'
             },
             {
                 'key': 'FFmpegConcat',
@@ -79,6 +84,7 @@ def download_video(url):
         'writesubtitles': True,
         'writethumbnail': True,
         'updatetime': False,
+        'js_runtimes': ['node'],
         'progress_hooks': [create_progress_hook(url)],
     }
 
@@ -89,36 +95,40 @@ def download_video(url):
             video_id = info_dict.get('id', 'video')
             video_title = info_dict.get('title', 'video')
             video_filename = f'{video_id}{VIDEO_EXTENSION}'
-            safe_filename = f'{video_title}{VIDEO_EXTENSION}'.replace(':', '_').replace('?', '_').replace(' ', '_').replace('#', '_').replace('/', '_')
+            safe_name = safe_filename(video_title)
             ydl.download([url])
-            os.rename('videos/' + video_filename, 'videos/' + safe_filename)
+            os.rename(os.path.join(directory, video_filename), os.path.join(directory, safe_name))
             downloads_in_progress[url] = 'completed'
             socketio.emit('download_complete', {'url': url})
     except Exception as e:
         downloads_in_progress[url] = f'error {str(e)}'
         socketio.emit('download_error', {'url': url, 'error': str(e)})
 
-@app.route('/play', methods=['GET'])
+
+@bp.route('/play', methods=['GET'])
 def play():
     filename = request.args.get('file', default=None, type=str)
     formatted_video_file = {
-            'original_filename': filename,
-            'sanitized_title': format_filename(filename)
+        'original_filename': filename,
+        'sanitized_title': format_filename(filename)
     }
     return render_template('play.html', video_file=formatted_video_file)
 
-@app.route('/delete', methods=['POST', 'DELETE'])
+
+@bp.route('/delete', methods=['POST', 'DELETE'])
 def delete():
-    filename = request.args.get('file', default=None, type=str)
-    filename = os.path.normpath('videos/{filename}'.format(filename=filename))
-    if filename.startswith('videos/'):
-        os.remove(filename)
-        return filename, 200
-    return 'invalid file', 400
+    requested_name = request.args.get('file', default=None, type=str)
+    if not requested_name:
+        return 'file is required', 400
 
-if __name__ == '__main__':
-    if not os.path.exists('videos'):
-        os.makedirs('videos')
+    videos_root = os.path.realpath(video_directory())
+    resolved_file = os.path.realpath(os.path.join(videos_root, requested_name))
 
-    socketio.run(app, host='0.0.0.0', port=4999, allow_unsafe_werkzeug=True)
-    
+    if os.path.commonpath([videos_root, resolved_file]) != videos_root:
+        return 'invalid file', 400
+
+    if not os.path.exists(resolved_file):
+        return 'file not found', 404
+
+    os.remove(resolved_file)
+    return requested_name, 200
